@@ -1,14 +1,14 @@
 import sys
-import pandas as pd
 import numpy as np
-from os.path import dirname, realpath, basename, splitext, join, isdir, isfile
+from os import listdir
+from os.path import dirname, realpath, basename, splitext, join, isfile
 import math
 from datetime import datetime
 from colorama import init, Fore, Style
 import matplotlib.pyplot as plt
 
 # tell python to search for modules from other parts of the bridge team scripts folder
-cwd = dirname(dirname(dirname(realpath(__file__))))
+cwd = dirname(realpath(__file__))
 sys.path.insert(1, cwd)
 
 from utils.read_weather_data_files import aimms_to_df
@@ -18,7 +18,6 @@ from utils.extract_aimms import extract_aimms
 from utils.plot_windspeed_errors import plot_windspeed_errors
 from utils.read_lidar_timestamp_source import get_times_from_mission_csv
 from utils.gooey_wrapper import gooey_on_empty_args, GooeyParser
-
 
 __version__ = "0.0.1"
 
@@ -75,18 +74,18 @@ def weather_to_stats(aimms_df,
     utc_end_time = aimms_df['Time'].iloc[-1].time()
     
     # temp, pressure, and humidty
-    average_temp = round(aimms_df['Temp'].mean(),3)
-    variance_temp = round(aimms_df['Temp'].std(),3)
-    average_pstat = round(aimms_df['P_stat'].mean(),3)
-    variance_pstat = round(aimms_df['P_stat'].std(),3)
-    average_relhumid = round(aimms_df['RH'].mean(),3)
-    variance_relhumid = round(aimms_df['RH'].std(),3)
+    average_temp = round(aimms_df['Temp'].mean(), 3)
+    variance_temp = round(aimms_df['Temp'].std(), 3)
+    average_pstat = round(aimms_df['P_stat'].mean(), 3)
+    variance_pstat = round(aimms_df['P_stat'].std(), 3)
+    average_relhumid = round(100 * aimms_df['RH'].mean(), 3)
+    variance_relhumid = round(100 * aimms_df['RH'].std(), 3)
 
     # compute wind speed from components
     vect_combined_components = np.vectorize(combined_components)
     aimms_df['Computed_WS'] = vect_combined_components(aimms_df['Uw'], aimms_df['Vw'])
-    average_wspeed = round(aimms_df['Computed_WS'].mean(),3)
-    variance_wspeed = round(aimms_df['Computed_WS'].std(),3)
+    average_wspeed = round(aimms_df['Computed_WS'].mean(), 3)
+    variance_wspeed = round(aimms_df['Computed_WS'].std(), 3)
 
     print(Fore.YELLOW + "\n\n### AIMMS Probe Statistics ###\n")
    
@@ -101,39 +100,50 @@ def weather_to_stats(aimms_df,
     print(f"Average pressure: {average_pstat} pascals")
     print(f"Pressure StDev: {variance_pstat} pascals")
     print(f"Average Wind Speed: {average_wspeed} m/sec")
-    print(f"Wind Speed StDev: {variance_wspeed} m/sec\n")
+    print(f"Wind Speed StDev: {variance_wspeed} m/sec")
     print(f"Average Rel Humidity: {average_relhumid} %")
     print(f"Rel Humidity StDev: {variance_relhumid} %")
     
     
-    # zero wind speed errors
+    # zero wind speed errors if they exceed more than 1 minute
     error_zero_ws_df = aimms_df.loc[aimms_df['Computed_WS'] == 0]
-    error_zero_ws_length = round(len(error_zero_ws_df['Time'].index)/60,1)
-    
+    error_zero_ws_length = round(len(error_zero_ws_df['Time'].index)/60, 1)
     if error_zero_ws_length > 1:
-        print(Fore.RED + "WARNING! Potential windspeed recording error " + Style.RESET_ALL + f"of 0 m/sec for {error_zero_ws_length} minutes.")
+        print(Fore.RED + "WARNING! Potential windspeed recording error " + Style.RESET_ALL
+              + f"of 0 m/sec for {error_zero_ws_length} minutes.")
     
-    # high wind speed errors
+    # high wind speed errors they exceed more than 1 minute
     error_high_ws_df = aimms_df.loc[aimms_df['Computed_WS'] > 27.0]
-    error_high_ws_length = round(len(error_high_ws_df['Time'].index)/60,1)
-
+    error_high_ws_length = round(len(error_high_ws_df['Time'].index)/60, 1)
     if error_high_ws_length > 1:
-        print(Fore.RED + "WARNING! Potential windspeed recording error " + Style.RESET_ALL + f"of >27 m/sec for {error_high_ws_length} minutes.")
+        print(Fore.RED + "WARNING! Potential windspeed recording error " + Style.RESET_ALL
+              + f"of >27 m/sec for {error_high_ws_length} minutes.")
 
-    # temperature errors
+    # temperature errors if they exceed more than 1 minute
     error_temp_df = aimms_df.loc[aimms_df['Temp'] == 0]
-    error_temp_length = round(len(error_temp_df['Time'].index)/60,1)  
+    error_zero_temp_length = round(len(error_temp_df['Time'].index)/60, 1)
+    if error_zero_temp_length > 1:
+        print(Fore.RED + "WARNING! Potential data recording error " + Style.RESET_ALL
+              + f"of 0 temperature for {error_zero_temp_length} minutes.")
 
-    if error_temp_length > 1:
-        print(Fore.RED + "WARNING! Potential data recording error " + Style.RESET_ALL + f"of 0 temperature for {error_temp_length} minutes.")
-        
-        
-    # pressure errors
-    error_pressure_df = aimms_df.loc[aimms_df['Temp'] == 0]
-    error_pressure_length = round(len(error_pressure_df['Time'].index)/60,1)  
+    error_temp_df = aimms_df.loc[aimms_df['Temp'] >= 120]
+    error_high_temp_length = round(len(error_temp_df['Time'].index) / 60, 1)
+    if error_high_temp_length > 1:
+        print(Fore.RED + "WARNING! Potential data recording error " + Style.RESET_ALL
+              + f"of >120 temperature for {error_high_temp_length} minutes.")
 
-    if error_pressure_length > 1:
-        print(Fore.RED + "WARNING! Potential data recording error " + Style.RESET_ALL + f"of 0 pressure for {error_pressure_length} minutes.")
+    # pressure errors if they exceed more than 1 minute
+    error_pressure_df = aimms_df.loc[aimms_df['P_stat'] == 0]
+    error_zero_pressure_length = round(len(error_pressure_df['Time'].index)/60, 1)
+    if error_zero_pressure_length > 1:
+        print(Fore.RED + "WARNING! Potential data recording error " + Style.RESET_ALL
+              + f"of 0 pressure for {error_zero_pressure_length} minutes.")
+
+    error_pressure_df = aimms_df.loc[aimms_df['P_stat'] >= 108380]
+    error_high_pressure_length = round(len(error_pressure_df['Time'].index)/60, 1)
+    if error_high_pressure_length > 1:
+        print(Fore.RED + "WARNING! Potential data recording error " + Style.RESET_ALL
+              + f"of >10838 pressure for {error_high_pressure_length} minutes.")
 
     with open(weather_stats, mode='w') as f:
         # write out stats to a log file for future review
@@ -156,16 +166,22 @@ def weather_to_stats(aimms_df,
         f.writelines(f"Average pressure: {average_pstat} pascals\n")
         f.writelines(f"Pressure StDev: {variance_pstat} pascals\n")
         f.writelines(f"Average Wind Speed: {average_wspeed} m/sec\n")
-        f.writelines(f"Wind Speed StDev: {variance_wspeed} m/sec\n\n")
-        
+        f.writelines(f"Wind Speed StDev: {variance_wspeed} m/sec\n")
+        f.writelines(f"Average Rel Humidity: {average_relhumid} %\n")
+        f.writelines(f"Rel Humidity StDev: {variance_relhumid} %\n\n")
+
         if error_zero_ws_length > 1:
             f.writelines(f"WARNING! Potential windspeed recording error of 0 m/sec for {error_zero_ws_length} minutes.\n\n")
         if error_high_ws_length > 1:
             f.writelines(f"WARNING! Potential windspeed recording error of >27 m/sec for {error_high_ws_length} minutes.\n\n")
-        if error_temp_length > 1:
-            f.writelines(f"WARNING! Potential data recording error of 0 temperature for {error_temp_df} minutes.\n\n")
-        if error_pressure_length > 1:
-            f.writelines(f"WARNING! Potential data recording error of 0 pressure for {error_pressure_length} minutes.\n\n")
+        if error_zero_temp_length > 1:
+            f.writelines(f"WARNING! Potential data recording error of 0 temperature for {error_zero_temp_length} minutes.\n\n")
+        if error_high_temp_length > 1:
+            f.writelines(f"WARNING! Potential data recording error of >120 temperature for {error_high_temp_length} minutes.\n\n")
+        if error_zero_pressure_length > 1:
+            f.writelines(f"WARNING! Potential data recording error of 0 pressure for {error_zero_pressure_length} minutes.\n\n")
+        if error_high_pressure_length > 1:
+            f.writelines(f"WARNING! Potential data recording error of >108380 pressure for {error_high_pressure_length} minutes.\n\n")
 
     # make some plots
 
@@ -317,10 +333,8 @@ def check_weather_data(aimms_file, solar, mission_csv, out_dir, utc_offset, per_
 
     # estimate sample rate:
     sample_rate = raw_weather_df['Time'].diff().median()
-    print(raw_weather_df['Time'].head(50))
     # TODO: fix utc midnight issue where plot is split and second part of the flight is plotted before the first part.
-    print(sample_rate)
-    print(sample_rate.total_seconds())
+    print(f"Detected median aimms sample rate: {sample_rate.total_seconds()} seconds")
     wind_smoothing = int(wind_smoothing / sample_rate.total_seconds())
     temp_smoothing = int(temp_smoothing / sample_rate.total_seconds())
     pressure_smoothing = int(pressure_smoothing / sample_rate.total_seconds())
@@ -390,6 +404,8 @@ def check_weather_data(aimms_file, solar, mission_csv, out_dir, utc_offset, per_
                                utc_offset=utc_offset,
                                smoothing=solar_smoothing)
 
+    print(f"\n\nWeather QC Complete!")
+
 
 @gooey_on_empty_args(program_name=f"QC AIMMS Weather Data {__version__}",
                      program_description=f"Raw data validation for helicopter-mounted AIMMS probe.",
@@ -412,10 +428,16 @@ def get_args():
 
     logging_group = parser.add_argument_group("Log Settings")
 
+    # get available executables
+    exe_paths = []
+    for path in sorted(listdir(AIMMS_EXE_DIR)):
+        if path.upper().endswith("EXE"):
+            exe_paths.append(path)
+
     settings_group.add_argument('--extraction_exe',
                         help="Specify an alternate weather probe extraction executable.",
                         default="ekf560A30.exe",
-                        choices=["ekf560A30.exe", "ekf612A30.exe", "canextr4_ssii.exe"],
+                        choices=exe_paths,
                         metavar="Extraction EXE")
 
     settings_group.add_argument("--in_path",

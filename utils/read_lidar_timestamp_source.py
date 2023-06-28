@@ -38,7 +38,10 @@ def get_times_from_mission_csv(mission_file):
         print("RPP timestamp extraction not yet supported!")
         pass
     else:
-        sys.exit(f"Mission file {mission_file} not recognized.")
+        lidar_start_time = "00:00:00.0"
+        lidar_end_time = "24:00:00.0"
+        print(f"Mission file {mission_file} not recognized.")
+        pass
 
     return lidar_start_time, lidar_end_time
 

@@ -50,7 +50,7 @@ def solar_to_df(solar_file,
     with open(solar_file, "r") as f:
         first_line = f.readline()
         units = first_line.split(",")[2].strip()
-        print(f"Discovered {units} units for solar irradiance.")
+        print(f"\n\nDiscovered {units} units for solar irradiance.")
 
     # set the columns of the dataframe
     columns = columns or ["Date", "LocalTime", "MicroMoles"]
@@ -66,7 +66,7 @@ def solar_to_df(solar_file,
     if units == "watts/m2" or units == "W/m2":
         raw_solar_df["MicroMoles"] = raw_solar_df["MicroMoles"] * 4.57
         print("Converting W/m2 to MicroMoles")
-    elif units == "μmoles":
+    elif units == "Î¼moles":
         print("No unit conversion applied.")
     else:
         print("Warning! Units not recognized, no conversion applied!")

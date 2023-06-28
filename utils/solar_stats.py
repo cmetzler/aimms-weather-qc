@@ -2,19 +2,13 @@ from os.path import dirname, realpath, basename, splitext, join, isdir
 import sys
 from colorama import init, Fore, Style
 import pandas as pd
-import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.colors
 
-# tell python to search for modules from other parts of the bridge team scripts folder
-cwd = dirname(dirname(dirname(realpath(__file__))))
-sys.path.insert(1, cwd)
-
-from read_weather_data_files import solar_to_df
-from utils.gui.gooey_wrapper import gooey_on_empty_args, GooeyParser
-from utils.logs.loggers import Logger
-from utils.logs.get_log_dirs import log_report
-from utils.paths.paths import get_filecount_and_size
+from utils.read_weather_data_files import solar_to_df
+from utils.gooey_wrapper import gooey_on_empty_args, GooeyParser
+from utils.loggers import Logger
+from utils.paths import get_filecount_and_size
 
 # set plotting backend to avoid QT errors
 matplotlib.use('TKAgg')
@@ -70,11 +64,11 @@ def solar_to_stats(solar_file, out_dir=None, utc_offset=7.0, start_time=None, en
 
     # setup the output files
     if out_dir:
-        output_stats = join(out_dir, splitext(basename(solar_file))[0] + "_solar_stats.log")
+        output_stats = join(out_dir, splitext(basename(solar_file))[0] + "_solar_stats.txt")
         timeseries_plot = join(out_dir, splitext(basename(solar_file))[0] + "_solar_timeseries_plot.png")
         # spatial_plot = join(splitext(basename(solar_file))[0] + "_spatial_plot.png")
     else:
-        output_stats = splitext(solar_file)[0] + "_solar_stats.log"
+        output_stats = splitext(solar_file)[0] + "_solar_stats.txt"
         timeseries_plot = splitext(solar_file)[0] + "_solar_timeseries_plot.png"
         # spatial_plot = splitext(solar_file)[0] + "_spatial_plot.png"
 

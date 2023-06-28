@@ -55,8 +55,8 @@ def plot_windspeed_errors(aimms_df, output_file):
 
     # format the plot area
     ax.set_extent((x_min, x_max, y_min, y_max), crs=ccrs.PlateCarree())
-    ax.set_xticks(np.linspace(x_min, x_max, 7), minor=False)  # set longitude indicators
-    ax.set_yticks(np.linspace(y_min, y_max, 7)[1:], minor=False)  # set latitude indicators
+    ax.set_xticks(ticks=np.linspace(x_min, x_max, 7))  # set longitude indicators
+    ax.set_yticks(ticks=np.linspace(y_min, y_max, 7)[1:])  # set latitude indicators
     lon_formatter = LongitudeFormatter(number_format='0.3f', degree_symbol='',
                                        dateline_direction_label=True)  # format lons
     lat_formatter = LatitudeFormatter(number_format='0.3f', degree_symbol='')  # format lats

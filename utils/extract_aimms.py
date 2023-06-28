@@ -49,18 +49,18 @@ def extract_aimms(aimms_file,
             args = [r"ekf560A30.exe",
                     r"ekf560A30_param.dat",
                     file_name,
-                    "-c","on",
-                    "-f","on",
-                    "-t","on",
+                    "-c", "on",
+                    "-f", "on",
+                    "-t", "on",
                     "-w", "on",
                     "-o", out_file_name]
         elif weather_exe == "ekf612A30.exe":
             args = [r"ekf612A30.exe",
                     r"ekf612A30_param.dat",
                     file_name,
-                    "-c","on",
-                    "-f","on",
-                    "-t","on",
+                    "-c", "on",
+                    "-f", "on",
+                    "-t", "on",
                     "-w", "on",
                     "-o", out_file_name]
         elif weather_exe == "canextr4_ssii.exe":
@@ -90,7 +90,7 @@ def extract_aimms(aimms_file,
     try:
         os.remove(os.path.join(exe_dir, file_name))
     except Exception as e:
-        raise e
+        print(e)
 
     # check if the output is empty which can happen if the exe is not compatible with the raw data file
     if os.path.getsize(out_file_copy) == 0:
