@@ -19,7 +19,7 @@ from utils.plot_windspeed_errors import plot_windspeed_errors
 from utils.read_lidar_timestamp_source import get_times_from_mission_csv
 from utils.gooey_wrapper import gooey_on_empty_args, GooeyParser
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 # aimms processing directory
 AIMMS_EXE_DIR = join(cwd, "aimms_exe")
@@ -503,6 +503,12 @@ def get_args():
 
 
 def validate_args(args):
+    """ immediate validation of critical user inputs """
+
+    # check that the weather file exists
+    if not isfile(args.in_path):
+        sys.exit(f"Input file {args.in_path} does not exist.")
+
     return args
 
 
