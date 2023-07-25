@@ -63,7 +63,7 @@ def solar_to_df(solar_file,
     raw_solar_df[time_column] = pd.to_datetime(raw_solar_df[time_column], format=time_format)
 
     # convert the units if needed.
-    if units == "watts/m2" or units == "W/m2":
+    if units == "watts/m2" or units == "W/m2" or units == "Watts":
         raw_solar_df["MicroMoles"] = raw_solar_df["MicroMoles"] * 4.57
         print("Converting W/m2 to MicroMoles")
     elif units == "Î¼moles":
